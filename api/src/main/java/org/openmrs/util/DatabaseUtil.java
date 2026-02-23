@@ -17,6 +17,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.hibernate.Session;
@@ -47,6 +48,17 @@ public class DatabaseUtil {
 	
 	private static final Set<String> ALLOWED_JDBC_DRIVERS = Set.of(
 		MYSQL_DRIVER, MYSQL_LEGACY_DRIVER, MARIADB_DRIVER, POSTGRESQL_DRIVER, H2_DRIVER, HSQLDB_DRIVER, ORACLE_DRIVER, SQLSERVER_DRIVER, JTDS_DRIVER
+	);
+	
+	private static final Map<String, String> DRIVER_MAP = Map.of(
+		"jdbc:mysql", MYSQL_DRIVER,
+		"jdbc:mariadb", MARIADB_DRIVER,
+		"jdbc:hsqldb", HSQLDB_DRIVER,
+		"jdbc:postgresql", POSTGRESQL_DRIVER,
+		"jdbc:oracle", ORACLE_DRIVER,
+		"jdbc:jtds", JTDS_DRIVER,
+		"sqlserver", SQLSERVER_DRIVER,
+		"jdbc:h2", H2_DRIVER
 	);
 	
 	private static final Logger log = LoggerFactory.getLogger(DatabaseUtil.class);
@@ -86,35 +98,13 @@ public class DatabaseUtil {
 	}
 	
 	private static String detectDriverFromUrl(String connectionUrl) throws ClassNotFoundException {
-		String driver;
-		if (connectionUrl.contains("jdbc:mysql")) {
-			Class.forName(MYSQL_DRIVER);
-			driver = MYSQL_DRIVER;
-		} else if (connectionUrl.contains("jdbc:mariadb")) {
-			Class.forName(MARIADB_DRIVER);
-			driver = MARIADB_DRIVER;
-		} else if (connectionUrl.contains("jdbc:hsqldb")) {
-			Class.forName(HSQLDB_DRIVER);
-			driver = HSQLDB_DRIVER;
-		} else if (connectionUrl.contains("jdbc:postgresql")) {
-			Class.forName(POSTGRESQL_DRIVER);
-			driver = POSTGRESQL_DRIVER;
-		} else if (connectionUrl.contains("jdbc:oracle")) {
-			Class.forName(ORACLE_DRIVER);
-			driver = ORACLE_DRIVER;
-		} else if (connectionUrl.contains("jdbc:jtds")) {
-			Class.forName(JTDS_DRIVER);
-			driver = JTDS_DRIVER;
-		} else if (connectionUrl.contains("sqlserver")) {
-			Class.forName(SQLSERVER_DRIVER);
-			driver = SQLSERVER_DRIVER;
-		} else if (connectionUrl.contains("jdbc:h2")) {
-			Class.forName(H2_DRIVER);
-			driver = H2_DRIVER;
-		} else {
-			driver = null;
+		for (Map.Entry<String, String> entry : DRIVER_MAP.entrySet()) {
+			if (connectionUrl.contains(entry.getKey())) {
+				Class.forName(entry.getValue());
+				return entry.getValue();
+			}
 		}
-		return driver;
+		return null;
 	}
 	
 	/**
