@@ -9,23 +9,21 @@
  */
 package org.openmrs.util;
 
-import org.hibernate.Session;
-import org.openmrs.api.db.DAOException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.util.StringUtils;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import org.hibernate.Session;
+import org.openmrs.api.db.DAOException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.util.StringUtils;
 
 /**
  * Utility class that provides database related methods
@@ -71,11 +69,13 @@ public class DatabaseUtil {
 	public static String loadDatabaseDriver(String connectionUrl, String connectionDriver) throws ClassNotFoundException {
 		if (StringUtils.hasText(connectionDriver)) {
 			if (!ALLOWED_JDBC_DRIVERS.contains(connectionDriver)) {
-				log.error("Attempted to load an unauthorized database driver: {}", connectionDriver);
+				log.error("Attempted to load an unauthorized database driver: {}", OpenmrsUtil.sanitizeForLogging(connectionDriver));
 				throw new IllegalArgumentException("Database driver '" + connectionDriver + "' is not an allowed driver.");
 			}
 			Class.forName(connectionDriver);
-			log.debug("set user defined Database driver class: " + connectionDriver);
+			if (log.isDebugEnabled()) {
+				log.debug("set user defined Database driver class: {}", OpenmrsUtil.sanitizeForLogging(connectionDriver));
+			}
 		} else {
 			if (connectionUrl.contains("jdbc:mysql")) {
 				Class.forName(MYSQL_DRIVER);
@@ -103,7 +103,9 @@ public class DatabaseUtil {
 				connectionDriver = H2_DRIVER;
 			}
 		}
-		log.info("Set database driver class as " + connectionDriver);
+		if (log.isInfoEnabled()) {
+			log.info("Set database driver class as {}", OpenmrsUtil.sanitizeForLogging(connectionDriver));
+		}
 		return connectionDriver;
 	}
 	
