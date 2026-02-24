@@ -25,6 +25,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -49,6 +50,17 @@ public class DatabaseUtil {
 	
 	private static final Set<String> ALLOWED_JDBC_DRIVERS = Set.of(
 		MYSQL_DRIVER, MYSQL_LEGACY_DRIVER, MARIADB_DRIVER, POSTGRESQL_DRIVER, H2_DRIVER, HSQLDB_DRIVER, ORACLE_DRIVER, SQLSERVER_DRIVER, JTDS_DRIVER
+	);
+	
+	private static final Map<String, String> DRIVER_MAP = Map.of(
+		"jdbc:mysql", MYSQL_DRIVER,
+		"jdbc:mariadb", MARIADB_DRIVER,
+		"jdbc:hsqldb", HSQLDB_DRIVER,
+		"jdbc:postgresql", POSTGRESQL_DRIVER,
+		"jdbc:oracle", ORACLE_DRIVER,
+		"jdbc:jtds", JTDS_DRIVER,
+		"sqlserver", SQLSERVER_DRIVER,
+		"jdbc:h2", H2_DRIVER
 	);
 	
 	private static final Logger log = LoggerFactory.getLogger(DatabaseUtil.class);
@@ -77,34 +89,27 @@ public class DatabaseUtil {
 			Class.forName(connectionDriver);
 			log.debug("set user defined Database driver class: " + connectionDriver);
 		} else {
-			if (connectionUrl.contains("jdbc:mysql")) {
-				Class.forName(MYSQL_DRIVER);
-				connectionDriver = MYSQL_DRIVER;
-			} else if (connectionUrl.contains("jdbc:mariadb")) {
-				Class.forName(MARIADB_DRIVER);
-				connectionDriver = MARIADB_DRIVER;
-			} else if (connectionUrl.contains("jdbc:hsqldb")) {
-				Class.forName(HSQLDB_DRIVER);
-				connectionDriver = HSQLDB_DRIVER;
-			} else if (connectionUrl.contains("jdbc:postgresql")) {
-				Class.forName(POSTGRESQL_DRIVER);
-				connectionDriver = POSTGRESQL_DRIVER;
-			} else if (connectionUrl.contains("jdbc:oracle")) {
-				Class.forName(ORACLE_DRIVER);
-				connectionDriver = ORACLE_DRIVER;
-			} else if (connectionUrl.contains("jdbc:jtds")) {
-				Class.forName(JTDS_DRIVER);
-				connectionDriver = JTDS_DRIVER;
-			} else if (connectionUrl.contains("sqlserver")) {
-				Class.forName(SQLSERVER_DRIVER);
-				connectionDriver = SQLSERVER_DRIVER;
-			} else if (connectionUrl.contains("jdbc:h2")) {
-				Class.forName(H2_DRIVER);
-				connectionDriver = H2_DRIVER;
-			}
+			connectionDriver = detectDriverFromUrl(connectionUrl);
 		}
 		log.info("Set database driver class as " + connectionDriver);
 		return connectionDriver;
+	}
+	
+	/**
+	 * Detects and loads the appropriate JDBC driver based on the connection URL
+	 *
+	 * @param connectionUrl the database connection URL
+	 * @return the driver class name that was loaded
+	 * @throws ClassNotFoundException if no matching driver is found or cannot be loaded
+	 */
+	private static String detectDriverFromUrl(String connectionUrl) throws ClassNotFoundException {
+		for (Map.Entry<String, String> entry : DRIVER_MAP.entrySet()) {
+			if (connectionUrl.contains(entry.getKey())) {
+				Class.forName(entry.getValue());
+				return entry.getValue();
+			}
+		}
+		return null;
 	}
 	
 	/**
