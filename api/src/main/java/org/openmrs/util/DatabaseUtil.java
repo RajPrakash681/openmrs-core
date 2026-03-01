@@ -21,8 +21,6 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -59,7 +57,7 @@ public class DatabaseUtil {
 		"jdbc:postgresql", POSTGRESQL_DRIVER,
 		"jdbc:oracle", ORACLE_DRIVER,
 		"jdbc:jtds", JTDS_DRIVER,
-		"sqlserver", SQLSERVER_DRIVER,
+		"jdbc:sqlserver", SQLSERVER_DRIVER,
 		"jdbc:h2", H2_DRIVER
 	);
 	
@@ -96,11 +94,12 @@ public class DatabaseUtil {
 	}
 	
 	private static String detectDriverFromUrl(String connectionUrl) throws ClassNotFoundException {
-		for (Map.Entry<String, String> entry : DRIVER_MAP.entrySet()) {
-			if (connectionUrl.contains(entry.getKey())) {
-				Class.forName(entry.getValue());
-				return entry.getValue();
-			}
+		int separatorIndex = connectionUrl.indexOf("://");
+		String prefix = (separatorIndex != -1) ? connectionUrl.substring(0, separatorIndex) : connectionUrl;
+		String driver = DRIVER_MAP.get(prefix);
+		if (driver != null) {
+			Class.forName(driver);
+			return driver;
 		}
 		return null;
 	}
